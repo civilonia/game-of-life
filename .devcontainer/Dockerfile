@@ -1,0 +1,3 @@
+FROM mcr.microsoft.com/devcontainers/java:1-21-bookworm
+
+WORKDIR /workspaces/game-of-life
