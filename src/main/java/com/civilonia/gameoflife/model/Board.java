@@ -25,7 +25,8 @@ public final class Board {
      *
      * @param width number of columns; must be positive
      * @param height number of rows; must be positive
-     * @throws IllegalArgumentException if either dimension is not positive
+     * @throws IllegalArgumentException if either dimension is not positive or the
+     *     total cell count cannot be represented as an {@code int}
      */
     public Board(int width, int height) {
         validateDimensions(width, height);
@@ -45,7 +46,8 @@ public final class Board {
      * @param width number of columns; must be positive
      * @param height number of rows; must be positive
      * @param initialCells initial states in row-major order
-     * @throws IllegalArgumentException if dimensions or array shape are invalid
+     * @throws IllegalArgumentException if dimensions or array shape are invalid, or
+     *     the total cell count cannot be represented as an {@code int}
      * @throws NullPointerException if {@code initialCells} or one of its rows is null
      */
     public Board(int width, int height, boolean[][] initialCells) {

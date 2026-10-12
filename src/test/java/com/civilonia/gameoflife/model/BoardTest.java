@@ -11,6 +11,16 @@ import org.junit.jupiter.api.Test;
 class BoardTest {
 
     @Test
+    void createsAnAllDeadBoard() {
+        Board board = new Board(3, 2);
+
+        assertEquals(3, board.width());
+        assertEquals(2, board.height());
+        assertFalse(board.isAlive(0, 0));
+        assertFalse(board.isAlive(2, 1));
+    }
+
+    @Test
     void exposesDimensionsAndRowMajorCellStates() {
         Board board = new Board(3, 2, new boolean[][] {
                 {false, true, false},
