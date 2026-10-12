@@ -7,11 +7,10 @@ or network API.
 
 ## Project status
 
-The project currently provides the Java 21 Gradle library scaffold. The board
-model, simulation API, binary encoder, publishing workflow, and standalone
-example are specified in the project's issues and will be added incrementally.
-Sections marked **Planned API** or **Planned workflow** describe that agreed
-contract; they are not available in the current artifact.
+The library provides an immutable board model, a synchronous simulation API,
+the version 1 binary encoder and input format, GitHub Packages publishing, and
+a standalone command-line example. It targets Java 21 and has no runtime
+dependencies outside the Java standard library.
 
 ## Conway's Game of Life
 
@@ -67,8 +66,9 @@ Fabric, JSON libraries, logging frameworks, or other runtime dependencies.
 
 ### Board and coordinate contract
 
-The planned board model is immutable: callers can inspect dimensions and cell
-states, but cannot modify a constructed board or mutate its retained input.
+The board model is immutable: callers can inspect dimensions and cell states,
+but cannot modify a constructed board or mutate its retained input. The
+following contract applies to every board:
 
 - Coordinates are zero-based.
 - The origin is the top-left cell.
@@ -99,7 +99,7 @@ The public simulation entry point is `com.civilonia.gameoflife.GameOfLifeSimulat
 Create an instance with its static factory, providing the caller-owned output stream;
 it evolves the board synchronously and encodes states from `t=0` through `t=N`.
 
-Illustrative usage after the model and API issues are complete:
+Usage:
 
 ```java
 Board initialBoard = /* construct an immutable board */;
