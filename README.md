@@ -125,13 +125,68 @@ padding, decoder error handling, and manually verifiable byte-level examples.
 It is independent of Java serialization. Compression and extra metadata are
 intentionally out of scope for the initial format.
 
-## Planned standalone example
+## Binary input
 
-A small Java `main` application will demonstrate a fixed, reproducible pattern
-without Minecraft or a server. It will construct input through the public API,
-run `GameOfLifeSimulator`, and write a binary result file. Execution commands,
-output path, and expected result will be documented here when that example is
-implemented.
+Initial simulation data can be represented as a compact `GOLI` v1 document:
+magic and version, width, height, requested transitions, and one bit-packed
+initial board. `SimulationInput.fromBinary(bytes)` decodes and validates this
+document, and the resulting DTO can be passed directly to
+`GameOfLifeSimulator.simulate(input)`. `SimulationInput.toBinary()` writes the
+same input format. See the complete [binary input format](docs/binary-input-format.md)
+specification.
+
+## Standalone example
+
+The repository includes a small application, separate from the library source
+set, which needs neither Minecraft nor a server. `Program` takes a binary
+`GOLI` input document, restores it to a `SimulationInput`, and writes the
+resulting `GOLF` simulation.
+
+Run it from the repository root, supplying an input and an optional output path:
+
+```bash
+./gradlew runProgram --args='input.goli build/standalone-example/result.golf'
+```
+
+On Windows:
+
+```bat
+gradlew.bat runProgram --args="input.goli build/standalone-example/result.golf"
+```
+
+The first argument must be a complete `GOLI` v1 file as specified in the
+[binary input format](docs/binary-input-format.md). The optional second argument
+is the output file; if omitted, the binary `GOLF` result is written to standard
+output. Parent directories for an output file are created as needed. For the
+documented 5 × 5, two-transition blinker input, the output is 29 bytes: the
+17-byte `GOLF` v1 header followed by three 4-byte boards. The initial vertical
+blinker is present at `t=0`, becomes horizontal at `t=1`, and is vertical again
+at `t=2`. Its complete expected hexadecimal content is:
+
+```text
+47 4F 4C 46 01 00 00 00 05 00 00 00 05 00 00 00 02
+01 08 40 00 00 1C 00 00 01 08 40 00
+```
+
+The program owns the input/output files, while the library receives the decoded
+`SimulationInput` DTO through its public API.
+
+### Included experimental inputs
+
+The example source set contains reproducible, version-controlled `GOLI`
+resources under `src/example/resources/goli/`.
+
+Available inputs are:
+
+- `empty-3x3-zero.goli`: an empty 3 × 3 board with zero transitions
+- `blinker-5x5-two-transitions.goli`: a 5 × 5 blinker with two transitions
+- `glider-5x5-four-transitions.goli`: a 5 × 5 glider with four transitions
+
+For example:
+
+```bash
+./gradlew runProgram --args='src/example/resources/goli/blinker-5x5-two-transitions.goli build/blinker.golf'
+```
 
 ## Publishing and consumption
 
