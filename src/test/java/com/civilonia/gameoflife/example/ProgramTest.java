@@ -98,6 +98,29 @@ class ProgramTest {
         }
     }
 
+    @Test
+    void boundsInputReadsUsingTheConfiguredLimit(@TempDir Path temporaryDirectory) throws IOException {
+        Path inputPath = temporaryDirectory.resolve("oversized.goli");
+        Files.write(inputPath, new byte[] {0, 0, 0});
+        String previousLimit = System.getProperty("gameoflife.maxInputBytes");
+
+        try {
+            System.setProperty("gameoflife.maxInputBytes", "2");
+            assertThrows(IllegalArgumentException.class,
+                    () -> Program.main(new String[] {inputPath.toString()}));
+        } finally {
+            restoreProperty("gameoflife.maxInputBytes", previousLimit);
+        }
+    }
+
+    private static void restoreProperty(String propertyName, String previousValue) {
+        if (previousValue == null) {
+            System.clearProperty(propertyName);
+        } else {
+            System.setProperty(propertyName, previousValue);
+        }
+    }
+
     private static byte[] bytes(int... values) {
         byte[] result = new byte[values.length];
         for (int index = 0; index < values.length; index++) {

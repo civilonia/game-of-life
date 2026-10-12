@@ -2,7 +2,9 @@ package com.civilonia.gameoflife.example;
 
 import com.civilonia.gameoflife.GameOfLifeSimulator;
 import com.civilonia.gameoflife.input.SimulationInput;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,13 +38,7 @@ public final class Program {
 
         Path inputPath = Path.of(args[0]);
         long maxInputBytes = limit("gameoflife.maxInputBytes", DEFAULT_MAX_INPUT_BYTES);
-        if (Files.size(inputPath) > maxInputBytes) {
-            throw new IllegalArgumentException("input file exceeds the configured byte limit");
-        }
-        byte[] encodedInput = Files.readAllBytes(inputPath);
-        if (encodedInput.length > maxInputBytes) {
-            throw new IllegalArgumentException("input file exceeds the configured byte limit");
-        }
+        byte[] encodedInput = readBoundedInput(inputPath, maxInputBytes);
         SimulationInput input = SimulationInput.fromBinary(encodedInput);
         validateSimulationLimits(input);
 
@@ -65,6 +61,32 @@ public final class Program {
         }
 
         System.err.println("Wrote " + outputPath);
+    }
+
+    private static byte[] readBoundedInput(Path inputPath, long maxInputBytes) throws IOException {
+        if (maxInputBytes >= Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("gameoflife.maxInputBytes must be less than "
+                    + Integer.MAX_VALUE);
+        }
+
+        try (InputStream source = Files.newInputStream(inputPath);
+                ByteArrayOutputStream encoded = new ByteArrayOutputStream(
+                        (int) Math.min(maxInputBytes, 8_192))) {
+            byte[] buffer = new byte[8_192];
+            long bytesRead = 0;
+            while (true) {
+                int maximumRead = (int) Math.min(buffer.length, maxInputBytes - bytesRead + 1);
+                int count = source.read(buffer, 0, maximumRead);
+                if (count == -1) {
+                    return encoded.toByteArray();
+                }
+                if (count > maxInputBytes - bytesRead) {
+                    throw new IllegalArgumentException("input file exceeds the configured byte limit");
+                }
+                encoded.write(buffer, 0, count);
+                bytesRead += count;
+            }
+        }
     }
 
     private static void validateSimulationLimits(SimulationInput input) {

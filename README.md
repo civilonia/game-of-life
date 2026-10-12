@@ -183,6 +183,10 @@ Java system property (for example, `-Dgameoflife.maxOutputBytes=134217728`).
 | `gameoflife.maxCellGenerations` | 10,000,000 cell-generations |
 | `gameoflife.maxOutputBytes` | 64 MiB |
 
+Input is read incrementally and rejected as soon as the first byte beyond
+`gameoflife.maxInputBytes` is encountered; the program does not rely on file
+metadata to enforce that limit.
+
 The program also checks failures reported by standard output after writing, so
 a broken pipe or failed redirection does not appear to complete successfully.
 
