@@ -171,6 +171,21 @@ at `t=2`. Its complete expected hexadecimal content is:
 The program owns the input/output files, while the library receives the decoded
 `SimulationInput` DTO through its public API.
 
+To prevent an input file from exhausting local CPU or storage, `Program` checks
+the following limits before simulation. Each may be overridden with a positive
+Java system property (for example, `-Dgameoflife.maxOutputBytes=134217728`).
+
+| Property | Default limit |
+| --- | ---: |
+| `gameoflife.maxInputBytes` | 1 MiB |
+| `gameoflife.maxCells` | 1,000,000 cells |
+| `gameoflife.maxTransitions` | 10,000 transitions |
+| `gameoflife.maxCellGenerations` | 10,000,000 cell-generations |
+| `gameoflife.maxOutputBytes` | 64 MiB |
+
+The program also checks failures reported by standard output after writing, so
+a broken pipe or failed redirection does not appear to complete successfully.
+
 ### Included experimental inputs
 
 The example source set contains reproducible, version-controlled `GOLI`

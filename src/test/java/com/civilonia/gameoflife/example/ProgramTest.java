@@ -7,6 +7,7 @@ import com.civilonia.gameoflife.input.SimulationInput;
 import com.civilonia.gameoflife.model.Board;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,6 +66,36 @@ class ProgramTest {
                 0x00, 0x00, 0x00, 0x01,
                 0x00, 0x00, 0x00, 0x00,
                 0x00), capturedOutput.toByteArray());
+    }
+
+    @Test
+    void rejectsSimulationsThatExceedTheDefaultTransitionLimit(@TempDir Path temporaryDirectory)
+            throws IOException {
+        Path inputPath = temporaryDirectory.resolve("too-many-transitions.goli");
+        Files.write(inputPath, new SimulationInput(new Board(1, 1), 10_001).toBinary());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> Program.main(new String[] {inputPath.toString()}));
+    }
+
+    @Test
+    void reportsStandardOutputWriteFailures(@TempDir Path temporaryDirectory) throws IOException {
+        Path inputPath = temporaryDirectory.resolve("input.goli");
+        Files.write(inputPath, new SimulationInput(new Board(1, 1), 0).toBinary());
+        PrintStream originalStandardOutput = System.out;
+        OutputStream failingOutput = new OutputStream() {
+            @Override
+            public void write(int value) throws IOException {
+                throw new IOException("simulated standard output failure");
+            }
+        };
+
+        try {
+            System.setOut(new PrintStream(failingOutput));
+            assertThrows(IOException.class, () -> Program.main(new String[] {inputPath.toString()}));
+        } finally {
+            System.setOut(originalStandardOutput);
+        }
     }
 
     private static byte[] bytes(int... values) {

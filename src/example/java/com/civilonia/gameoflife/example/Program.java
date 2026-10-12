@@ -12,6 +12,12 @@ import java.nio.file.Path;
  */
 public final class Program {
 
+    private static final long DEFAULT_MAX_INPUT_BYTES = 1L << 20;
+    private static final long DEFAULT_MAX_CELLS = 1_000_000L;
+    private static final long DEFAULT_MAX_TRANSITIONS = 10_000L;
+    private static final long DEFAULT_MAX_CELL_GENERATIONS = 10_000_000L;
+    private static final long DEFAULT_MAX_OUTPUT_BYTES = 64L << 20;
+
     private Program() {
     }
 
@@ -29,11 +35,23 @@ public final class Program {
         }
 
         Path inputPath = Path.of(args[0]);
-        SimulationInput input = SimulationInput.fromBinary(Files.readAllBytes(inputPath));
+        long maxInputBytes = limit("gameoflife.maxInputBytes", DEFAULT_MAX_INPUT_BYTES);
+        if (Files.size(inputPath) > maxInputBytes) {
+            throw new IllegalArgumentException("input file exceeds the configured byte limit");
+        }
+        byte[] encodedInput = Files.readAllBytes(inputPath);
+        if (encodedInput.length > maxInputBytes) {
+            throw new IllegalArgumentException("input file exceeds the configured byte limit");
+        }
+        SimulationInput input = SimulationInput.fromBinary(encodedInput);
+        validateSimulationLimits(input);
 
         if (args.length == 1) {
             GameOfLifeSimulator.create(System.out).simulate(input);
             System.out.flush();
+            if (System.out.checkError()) {
+                throw new IOException("failed to write simulation output to standard output");
+            }
             return;
         }
 
@@ -47,5 +65,43 @@ public final class Program {
         }
 
         System.err.println("Wrote " + outputPath);
+    }
+
+    private static void validateSimulationLimits(SimulationInput input) {
+        long cells = Math.multiplyExact((long) input.initialBoard().width(), input.initialBoard().height());
+        long transitions = input.generations();
+        if (cells > limit("gameoflife.maxCells", DEFAULT_MAX_CELLS)) {
+            throw new IllegalArgumentException("board exceeds the configured cell limit");
+        }
+        if (transitions > limit("gameoflife.maxTransitions", DEFAULT_MAX_TRANSITIONS)) {
+            throw new IllegalArgumentException("simulation exceeds the configured transition limit");
+        }
+
+        long cellGenerations = Math.multiplyExact(cells, transitions);
+        if (cellGenerations > limit("gameoflife.maxCellGenerations", DEFAULT_MAX_CELL_GENERATIONS)) {
+            throw new IllegalArgumentException("simulation exceeds the configured computation limit");
+        }
+
+        long bytesPerBoard = (cells + Byte.SIZE - 1) / Byte.SIZE;
+        long outputBytes = Math.addExact(17L, Math.multiplyExact(transitions + 1, bytesPerBoard));
+        if (outputBytes > limit("gameoflife.maxOutputBytes", DEFAULT_MAX_OUTPUT_BYTES)) {
+            throw new IllegalArgumentException("simulation exceeds the configured output byte limit");
+        }
+    }
+
+    private static long limit(String propertyName, long defaultValue) {
+        String configuredValue = System.getProperty(propertyName);
+        if (configuredValue == null) {
+            return defaultValue;
+        }
+        try {
+            long value = Long.parseLong(configuredValue);
+            if (value <= 0) {
+                throw new IllegalArgumentException(propertyName + " must be positive");
+            }
+            return value;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(propertyName + " must be a positive integer", exception);
+        }
     }
 }
