@@ -34,6 +34,26 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
+sourceSets {
+    example {
+        java.srcDir('src/example/java')
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+dependencies {
+    testImplementation sourceSets.example.output
+}
+
+tasks.register('runProgram', JavaExec) {
+    group = 'application'
+    description = 'Runs the standalone Game of Life program.'
+    classpath = sourceSets.example.runtimeClasspath
+    mainClass = 'com.civilonia.gameoflife.example.Program'
+    dependsOn(tasks.named('exampleClasses'))
+}
+
 tasks.named('test') {
     useJUnitPlatform()
     dependsOn(tasks.named('jar'))
