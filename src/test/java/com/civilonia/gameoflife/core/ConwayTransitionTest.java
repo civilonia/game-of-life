@@ -139,6 +139,25 @@ class ConwayTransitionTest {
     }
 
     @Test
+    void evolvesACornerPatternWithoutWrappingAtFiniteEdges() {
+        Board cornerPattern = board(new boolean[][] {
+                {true, true, false},
+                {true, false, false},
+                {false, false, false}
+        });
+        Board expected = board(new boolean[][] {
+                {true, true, false},
+                {true, true, false},
+                {false, false, false}
+        });
+
+        Board nextGeneration = ConwayTransition.nextGeneration(cornerPattern);
+
+        assertBoardEquals(expected, nextGeneration);
+        assertFalse(nextGeneration.isAlive(2, 2));
+    }
+
+    @Test
     void returnsANewBoardWithoutChangingTheInputAndIsDeterministic() {
         Board original = board(new boolean[][] {
                 {false, true, false},
