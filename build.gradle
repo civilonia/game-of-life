@@ -36,6 +36,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    dependsOn(tasks.named('jar'))
+    doFirst {
+        systemProperty('libraryJar', tasks.named('jar').get().archiveFile.get().asFile.absolutePath)
+    }
 }
 
 publishing {
