@@ -9,12 +9,20 @@ def releaseTag = providers.gradleProperty('releaseTag')
     .orElse(providers.environmentVariable('RELEASE_TAG'))
     .orNull
 
-if (releaseTag != null) {
-    def matcher = (releaseTag =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/)
+// SemVer 2.0.0 with a required leading "v". Numeric prerelease identifiers
+// cannot have leading zeroes; build metadata identifiers may.
+def releaseTagPattern = ~/^v((0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)$/
+
+def versionForReleaseTag = { tag ->
+    def matcher = (tag =~ releaseTagPattern)
     if (!matcher.matches()) {
-        throw new GradleException("releaseTag must use vMAJOR.MINOR.PATCH format: ${releaseTag}")
+        throw new GradleException("releaseTag must use a valid SemVer tag (vMAJOR.MINOR.PATCH with optional prerelease or build metadata): ${tag}")
     }
-    version = matcher.group(1) + '.' + matcher.group(2) + '.' + matcher.group(3)
+    matcher.group(1)
+}
+
+if (releaseTag != null) {
+    version = versionForReleaseTag(releaseTag)
 } else {
     version = '0.1.0-SNAPSHOT'
 }
@@ -60,6 +68,39 @@ tasks.named('test') {
     doFirst {
         systemProperty('libraryJar', tasks.named('jar').get().archiveFile.get().asFile.absolutePath)
     }
+}
+
+tasks.register('verifyReleaseTagValidation') {
+    group = 'verification'
+    description = 'Verifies accepted SemVer release tags and their Maven versions.'
+
+    doLast {
+        [
+            'v0.1.0'             : '0.1.0',
+            'v0.1.0-alpha.1'     : '0.1.0-alpha.1',
+            'v0.1.0-beta.1'      : '0.1.0-beta.1',
+            'v1.0.0-rc.1'        : '1.0.0-rc.1',
+            'v1.2.3+build.7'     : '1.2.3+build.7',
+            'v1.2.3-rc.1+build.7': '1.2.3-rc.1+build.7'
+        ].each { tag, expectedVersion ->
+            assert versionForReleaseTag(tag) == expectedVersion: "Expected ${tag} to resolve to ${expectedVersion}"
+        }
+
+        ['0.1.0', 'v0.1', 'v01.0.0', 'v1.0.0-', 'v1.0.0-alpha..1', 'v1.0.0-alpha.01'].each { tag ->
+            def accepted = false
+            try {
+                versionForReleaseTag(tag)
+                accepted = true
+            } catch (GradleException ignored) {
+                // Expected: malformed tags cannot be used for publishing.
+            }
+            assert !accepted: "Expected invalid release tag to be rejected: ${tag}"
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn(tasks.named('verifyReleaseTagValidation'))
 }
 
 publishing {
