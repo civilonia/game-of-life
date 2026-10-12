@@ -158,6 +158,18 @@ class ConwayTransitionTest {
     }
 
     @Test
+    void evolvesLiveAndDeadMinimumSizedBoards() {
+        Board liveBoard = Board.builder(1, 1).setAlive(0, 0, true).build();
+        Board deadBoard = new Board(1, 1);
+
+        Board nextLiveBoard = ConwayTransition.nextGeneration(liveBoard);
+        Board nextDeadBoard = ConwayTransition.nextGeneration(deadBoard);
+
+        assertFalse(nextLiveBoard.isAlive(0, 0));
+        assertFalse(nextDeadBoard.isAlive(0, 0));
+    }
+
+    @Test
     void returnsANewBoardWithoutChangingTheInputAndIsDeterministic() {
         Board original = board(new boolean[][] {
                 {false, true, false},
