@@ -29,48 +29,37 @@ public final class Board {
      *     total cell count cannot be represented as an {@code int}
      */
     public Board(int width, int height) {
+        this(width, height, emptyCells(width, height));
+    }
+
+    private Board(int width, int height, BitSet liveCells) {
         validateDimensions(width, height);
+        Objects.requireNonNull(liveCells, "liveCells must not be null");
+
         this.width = width;
         this.height = height;
-        this.liveCells = new BitSet(cellCount(width, height));
+        this.liveCells = (BitSet) liveCells.clone();
+    }
+
+    private static BitSet emptyCells(int width, int height) {
+        validateDimensions(width, height);
+        return new BitSet(cellCount(width, height));
     }
 
     /**
-     * Creates a board from row-major cell states.
+     * Creates a builder for an immutable board with the supplied dimensions.
      *
-     * <p>{@code initialCells[y][x]} supplies the state at {@code (x, y)}. The
-     * array must have exactly {@code height} rows, each with exactly {@code width}
-     * columns. Its contents are copied, so later mutations do not affect this
-     * board.</p>
+     * <p>The builder keeps its mutable construction state private. Each call to
+     * {@link Builder#build()} produces an independent immutable board.</p>
      *
      * @param width number of columns; must be positive
      * @param height number of rows; must be positive
-     * @param initialCells initial states in row-major order
-     * @throws IllegalArgumentException if dimensions or array shape are invalid, or
-     *     the total cell count cannot be represented as an {@code int}
-     * @throws NullPointerException if {@code initialCells} or one of its rows is null
+     * @return a builder for a board of the supplied dimensions
+     * @throws IllegalArgumentException if either dimension is not positive or the
+     *     total cell count cannot be represented as an {@code int}
      */
-    public Board(int width, int height, boolean[][] initialCells) {
-        validateDimensions(width, height);
-        Objects.requireNonNull(initialCells, "initialCells must not be null");
-        if (initialCells.length != height) {
-            throw new IllegalArgumentException("initialCells must contain exactly " + height + " rows");
-        }
-
-        this.width = width;
-        this.height = height;
-        this.liveCells = new BitSet(cellCount(width, height));
-        for (int y = 0; y < height; y++) {
-            boolean[] row = Objects.requireNonNull(initialCells[y], "initialCells rows must not be null");
-            if (row.length != width) {
-                throw new IllegalArgumentException("each initialCells row must contain exactly " + width + " columns");
-            }
-            for (int x = 0; x < width; x++) {
-                if (row[x]) {
-                    liveCells.set(indexOf(x, y));
-                }
-            }
-        }
+    public static Builder builder(int width, int height) {
+        return new Builder(width, height);
     }
 
     /** Returns the number of columns. */
@@ -111,6 +100,52 @@ public final class Board {
             return Math.multiplyExact(width, height);
         } catch (ArithmeticException exception) {
             throw new IllegalArgumentException("board dimensions are too large", exception);
+        }
+    }
+
+    /**
+     * Mutable construction helper for a {@link Board}.
+     *
+     * <p>This type deliberately exposes cell coordinates rather than the board's
+     * internal storage representation.</p>
+     */
+    public static final class Builder {
+
+        private final int width;
+        private final int height;
+        private final BitSet liveCells;
+
+        private Builder(int width, int height) {
+            validateDimensions(width, height);
+            this.width = width;
+            this.height = height;
+            this.liveCells = new BitSet(cellCount(width, height));
+        }
+
+        /**
+         * Sets the state of a cell in the board being built.
+         *
+         * @param x zero-based column coordinate
+         * @param y zero-based row coordinate
+         * @param alive whether the cell is alive
+         * @return this builder
+         * @throws IndexOutOfBoundsException if {@code (x, y)} is outside the board
+         */
+        public Builder setAlive(int x, int y, boolean alive) {
+            if (x < 0 || x >= width || y < 0 || y >= height) {
+                throw new IndexOutOfBoundsException("cell coordinates are outside the board");
+            }
+            liveCells.set(y * width + x, alive);
+            return this;
+        }
+
+        /**
+         * Builds an immutable snapshot of the cells configured so far.
+         *
+         * @return an immutable board independent from this builder
+         */
+        public Board build() {
+            return new Board(width, height, liveCells);
         }
     }
 }

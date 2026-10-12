@@ -11,10 +11,11 @@ class SimulationInputTest {
 
     @Test
     void createsInputFromAnInitialBoardAndGenerationCount() {
-        Board initialBoard = new Board(3, 2, new boolean[][] {
-                {false, true, false},
-                {true, false, true}
-        });
+        Board initialBoard = Board.builder(3, 2)
+                .setAlive(1, 0, true)
+                .setAlive(0, 1, true)
+                .setAlive(2, 1, true)
+                .build();
 
         SimulationInput input = new SimulationInput(initialBoard, 4);
 
