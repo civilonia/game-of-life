@@ -2,6 +2,7 @@ package com.civilonia.gameoflife;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.civilonia.gameoflife.input.SimulationInput;
@@ -12,6 +13,24 @@ import java.io.OutputStream;
 import org.junit.jupiter.api.Test;
 
 class GameOfLifeSimulatorTest {
+
+    @Test
+    void rejectsNullOutputWhenCreatingASimulator() {
+        NullPointerException exception = assertThrows(NullPointerException.class,
+                () -> GameOfLifeSimulator.create(null));
+
+        assertEquals("output must not be null", exception.getMessage());
+    }
+
+    @Test
+    void rejectsNullInputWhenSimulating() {
+        GameOfLifeSimulator simulator = GameOfLifeSimulator.create(new ByteArrayOutputStream());
+
+        NullPointerException exception = assertThrows(NullPointerException.class,
+                () -> simulator.simulate(null));
+
+        assertEquals("input must not be null", exception.getMessage());
+    }
 
     @Test
     void writesOnlyTheInitialBoardForZeroTransitions() throws IOException {
