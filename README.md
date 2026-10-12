@@ -118,16 +118,12 @@ propagated and a failed write may leave partial output in that stream.
 
 ## Binary output
 
-The planned binary format is deterministic, versioned, and independent of Java
-serialization. Its header will identify the format and version and record the
-board width, height, and transition count `N`. The payload will contain exactly
-`N + 1` states in chronological order, beginning with `t=0`.
-
-The forthcoming specification will define the magic bytes, header layout,
-byte order, cell traversal order, bit order, padding for board sizes not
-divisible by eight, and the handling of invalid, unsupported, or truncated
-data. It will also include manually verifiable byte-level fixtures. Compression
-and extra metadata are intentionally out of scope for the initial format.
+The deterministic, versioned binary format is specified in
+[Binary output format](docs/binary-output-format.md). It defines the `GOLF`
+format identifier, version 1 header, byte and bit order, generation semantics,
+padding, decoder error handling, and manually verifiable byte-level examples.
+It is independent of Java serialization. Compression and extra metadata are
+intentionally out of scope for the initial format.
 
 ## Planned standalone example
 
