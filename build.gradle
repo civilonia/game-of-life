@@ -1,9 +1,23 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 group = 'com.civilonia'
-version = '0.1.0-SNAPSHOT'
+
+def releaseTag = providers.gradleProperty('releaseTag')
+    .orElse(providers.environmentVariable('RELEASE_TAG'))
+    .orNull
+
+if (releaseTag != null) {
+    def matcher = (releaseTag =~ /^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/)
+    if (!matcher.matches()) {
+        throw new GradleException("releaseTag must use vMAJOR.MINOR.PATCH format: ${releaseTag}")
+    }
+    version = matcher.group(1) + '.' + matcher.group(2) + '.' + matcher.group(3)
+} else {
+    version = '0.1.0-SNAPSHOT'
+}
 
 java {
     toolchain {
@@ -22,4 +36,31 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/civilonia/game-of-life')
+            credentials {
+                username = providers.environmentVariable('GITHUB_ACTOR').orNull
+                password = providers.environmentVariable('GITHUB_TOKEN').orNull
+            }
+        }
+    }
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    doFirst {
+        if (releaseTag == null) {
+            throw new GradleException('Publishing requires a semantic release tag via -PreleaseTag or RELEASE_TAG.')
+        }
+    }
 }
