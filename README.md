@@ -144,3 +144,27 @@ The intended Maven coordinates are:
 ```text
 com.civilonia:game-of-life
 ```
+
+Published releases are available from GitHub Packages. Configure the repository
+and dependency in a consuming Gradle project (with a GitHub token that can read
+packages when required):
+
+```groovy
+repositories {
+    maven {
+        url = uri('https://maven.pkg.github.com/civilonia/game-of-life')
+        credentials {
+            username = System.getenv('GITHUB_ACTOR')
+            password = System.getenv('GITHUB_TOKEN')
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.civilonia:game-of-life:1.0.0'
+}
+```
+
+Packages are published only when a GitHub Release with a `vMAJOR.MINOR.PATCH`
+tag is published. For example, release tag `v1.0.0` produces Maven version
+`1.0.0`.
