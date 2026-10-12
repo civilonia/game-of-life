@@ -81,5 +81,7 @@ class BoardTest {
         Board.Builder builder = Board.builder(1, 1);
         assertThrows(IndexOutOfBoundsException.class, () -> builder.setAlive(-1, 0, true));
         assertThrows(IndexOutOfBoundsException.class, () -> builder.setAlive(1, 0, true));
+        assertThrows(IndexOutOfBoundsException.class, () -> builder.setAlive(0, -1, true));
+        assertThrows(IndexOutOfBoundsException.class, () -> builder.setAlive(0, 1, true));
     }
 }
