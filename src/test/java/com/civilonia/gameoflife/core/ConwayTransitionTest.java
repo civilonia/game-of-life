@@ -12,7 +12,7 @@ class ConwayTransitionTest {
 
     @Test
     void countsAllEightLiveNeighborsForAnInteriorCell() {
-        Board board = new Board(3, 3, new boolean[][] {
+        Board board = board(new boolean[][] {
                 {true, true, true},
                 {true, false, true},
                 {true, true, true}
@@ -23,7 +23,7 @@ class ConwayTransitionTest {
 
     @Test
     void countsOnlyInBoundsNeighborsAtAnEdgeAndCorner() {
-        Board board = new Board(3, 3, new boolean[][] {
+        Board board = board(new boolean[][] {
                 {false, true, true},
                 {true, true, false},
                 {false, false, false}
@@ -35,7 +35,7 @@ class ConwayTransitionTest {
 
     @Test
     void excludesTheCenterCellFromItsOwnNeighborCount() {
-        Board board = new Board(1, 1, new boolean[][] {{true}});
+        Board board = board(new boolean[][] {{true}});
 
         assertEquals(0, ConwayTransition.countLiveNeighbors(board, 0, 0));
     }
@@ -186,7 +186,13 @@ class ConwayTransitionTest {
     }
 
     private static Board board(boolean[][] cells) {
-        return new Board(cells[0].length, cells.length, cells);
+        Board.Builder builder = Board.builder(cells[0].length, cells.length);
+        for (int y = 0; y < cells.length; y++) {
+            for (int x = 0; x < cells[y].length; x++) {
+                builder.setAlive(x, y, cells[y][x]);
+            }
+        }
+        return builder.build();
     }
 
     private static void assertBoardEquals(Board expected, Board actual) {

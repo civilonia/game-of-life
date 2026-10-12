@@ -71,12 +71,14 @@ public final class ConwayTransition {
 
         int width = board.width();
         int height = board.height();
-        boolean[][] nextCells = new boolean[height][width];
+        Board.Builder nextBoard = Board.builder(width, height);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                nextCells[y][x] = nextState(board.isAlive(x, y), countLiveNeighbors(board, x, y));
+                if (nextState(board.isAlive(x, y), countLiveNeighbors(board, x, y))) {
+                    nextBoard.setAlive(x, y, true);
+                }
             }
         }
-        return new Board(width, height, nextCells);
+        return nextBoard.build();
     }
 }

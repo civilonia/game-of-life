@@ -21,11 +21,12 @@ class BoardTest {
     }
 
     @Test
-    void exposesDimensionsAndRowMajorCellStates() {
-        Board board = new Board(3, 2, new boolean[][] {
-                {false, true, false},
-                {true, false, true}
-        });
+    void builderCreatesBoardWithTheConfiguredCellStates() {
+        Board board = Board.builder(3, 2)
+                .setAlive(1, 0, true)
+                .setAlive(0, 1, true)
+                .setAlive(2, 1, true)
+                .build();
 
         assertTrue(board.isAlive(1, 0));
         assertTrue(board.isAlive(0, 1));
@@ -38,7 +39,12 @@ class BoardTest {
 
     @Test
     void isAliveTreatsCoordinatesOutsideTheBoardAsDead() {
-        Board board = new Board(2, 2, new boolean[][] {{true, true}, {true, true}});
+        Board board = Board.builder(2, 2)
+                .setAlive(0, 0, true)
+                .setAlive(1, 0, true)
+                .setAlive(0, 1, true)
+                .setAlive(1, 1, true)
+                .build();
 
         assertFalse(board.isAlive(-1, 0));
         assertFalse(board.isAlive(0, -1));
@@ -48,25 +54,32 @@ class BoardTest {
     }
 
     @Test
-    void copiesInitialStateDefensively() {
-        boolean[][] initialCells = {{true, false}};
-        Board board = new Board(2, 1, initialCells);
-
-        initialCells[0][0] = false;
-        initialCells[0][1] = true;
-
-        assertTrue(board.isAlive(0, 0));
-        assertFalse(board.isAlive(1, 0));
-    }
-
-    @Test
-    void rejectsInvalidDimensionsAndInitialStateShapes() {
+    void rejectsInvalidDimensions() {
         assertThrows(IllegalArgumentException.class, () -> new Board(0, 1));
         assertThrows(IllegalArgumentException.class, () -> new Board(1, 0));
         assertThrows(IllegalArgumentException.class, () -> new Board(Integer.MAX_VALUE, 2));
-        assertThrows(IllegalArgumentException.class, () -> new Board(2, 2, new boolean[][] {{true, false}}));
-        assertThrows(IllegalArgumentException.class, () -> new Board(2, 1, new boolean[][] {{true}}));
-        assertThrows(NullPointerException.class, () -> new Board(1, 1, null));
-        assertThrows(NullPointerException.class, () -> new Board(1, 1, new boolean[][] {null}));
+    }
+
+    @Test
+    void builderCreatesIndependentImmutableBoardSnapshots() {
+        Board.Builder builder = Board.builder(2, 1).setAlive(0, 0, true);
+
+        Board first = builder.build();
+        builder.setAlive(0, 0, false).setAlive(1, 0, true);
+        Board second = builder.build();
+
+        assertTrue(first.isAlive(0, 0));
+        assertFalse(first.isAlive(1, 0));
+        assertFalse(second.isAlive(0, 0));
+        assertTrue(second.isAlive(1, 0));
+    }
+
+    @Test
+    void builderRejectsInvalidDimensionsAndCoordinates() {
+        assertThrows(IllegalArgumentException.class, () -> Board.builder(0, 1));
+
+        Board.Builder builder = Board.builder(1, 1);
+        assertThrows(IndexOutOfBoundsException.class, () -> builder.setAlive(-1, 0, true));
+        assertThrows(IndexOutOfBoundsException.class, () -> builder.setAlive(1, 0, true));
     }
 }
