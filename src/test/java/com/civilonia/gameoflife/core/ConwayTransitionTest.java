@@ -69,4 +69,10 @@ class ConwayTransitionTest {
         assertFalse(ConwayTransition.nextState(false, 2));
         assertFalse(ConwayTransition.nextState(false, 4));
     }
+
+    @Test
+    void rejectsNeighborCountsOutsideTheMooreNeighborhoodRange() {
+        assertThrows(IllegalArgumentException.class, () -> ConwayTransition.nextState(true, -1));
+        assertThrows(IllegalArgumentException.class, () -> ConwayTransition.nextState(false, 9));
+    }
 }

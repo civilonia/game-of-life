@@ -40,10 +40,17 @@ public final class ConwayTransition {
      * Applies Conway's transition rules to one cell.
      *
      * @param currentlyAlive whether the cell is alive in the current generation
-     * @param liveNeighbors number of live cells in its Moore neighborhood
+     * @param liveNeighbors number of live cells in its Moore neighborhood, from
+     *     zero through eight
      * @return whether the cell is alive in the next generation
+     * @throws IllegalArgumentException if {@code liveNeighbors} is outside the
+     *     range from zero through eight; such a count is impossible in a Game of
+     *     Life Moore neighborhood
      */
     public static boolean nextState(boolean currentlyAlive, int liveNeighbors) {
+        if (liveNeighbors < 0 || liveNeighbors > 8) {
+            throw new IllegalArgumentException("liveNeighbors must be between 0 and 8");
+        }
         return liveNeighbors == 3 || (currentlyAlive && liveNeighbors == 2);
     }
 }
