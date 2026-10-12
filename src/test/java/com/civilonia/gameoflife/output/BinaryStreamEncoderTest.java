@@ -106,6 +106,35 @@ class BinaryStreamEncoderTest {
                 () -> new SimulationConditions(1, 1, -1));
     }
 
+    @Test
+    void encodesTheMaximumUnsigned32BitTransitionCountInTheHeader() throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        new BinaryStreamEncoder(output).writeConditions(
+                new SimulationConditions(1, 1, 0xFFFF_FFFFL));
+
+        assertArrayEquals(bytes(
+                0x47, 0x4F, 0x4C, 0x46, 0x01,
+                0x00, 0x00, 0x00, 0x01,
+                0x00, 0x00, 0x00, 0x01,
+                0xFF, 0xFF, 0xFF, 0xFF), output.toByteArray());
+    }
+
+    @Test
+    void doesNotAcceptBoardsWhenWritingConditionsFails() throws IOException {
+        OutputStream failingOutput = new OutputStream() {
+            @Override
+            public void write(int value) throws IOException {
+                throw new IOException("write failed");
+            }
+        };
+        BinaryStreamEncoder encoder = new BinaryStreamEncoder(failingOutput);
+
+        assertThrows(IOException.class,
+                () -> encoder.writeConditions(new SimulationConditions(1, 1, 0)));
+        assertThrows(IllegalStateException.class, () -> encoder.writeBoard(new Board(1, 1)));
+    }
+
     private static byte[] bytes(int... values) {
         byte[] result = new byte[values.length];
         for (int index = 0; index < values.length; index++) {

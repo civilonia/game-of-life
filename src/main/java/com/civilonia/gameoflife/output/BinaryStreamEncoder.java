@@ -39,11 +39,12 @@ public final class BinaryStreamEncoder implements SimulationOutput {
      */
     @Override
     public void writeConditions(SimulationConditions conditions) throws IOException {
-        this.conditions = Objects.requireNonNull(conditions, "conditions must not be null");
+        Objects.requireNonNull(conditions, "conditions must not be null");
         if (conditions.transitions() > MAX_U32) {
             throw new IllegalArgumentException("transitions must be an unsigned 32-bit value");
         }
         writeHeader(conditions);
+        this.conditions = conditions;
     }
 
     /**
