@@ -235,6 +235,15 @@ dependencies {
 }
 ```
 
-Packages are published only when a GitHub Release with a `vMAJOR.MINOR.PATCH`
-tag is published. For example, release tag `v1.0.0` produces Maven version
-`1.0.0`.
+Packages are published only when a GitHub Release with a valid SemVer tag is
+published. Tags must start with `v` and use
+`vMAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]`; numeric components and numeric
+prerelease identifiers cannot have leading zeroes. The leading `v` is removed
+for the Maven version, so `v1.0.0` produces `1.0.0` and
+`v0.1.0-alpha.1` produces `0.1.0-alpha.1`.
+
+To publish a prerelease, create a GitHub Release from a new prerelease tag
+(for example, `v0.1.0-alpha.2`) and select GitHub's **Set as a pre-release**
+option. That GitHub flag controls how the release is presented; the SemVer
+suffix in the tag controls the published Maven version. Release tags must
+still point to a commit in `main` history.
