@@ -93,11 +93,11 @@ contains exactly the initial board at `t=0`. Each invocation is an independent,
 sequential, deterministic experiment: identical inputs must produce identical
 states and identical encoded bytes.
 
-## Planned public API
+## Public API
 
-The public entry point will be `com.civilonia.gameoflife.LifeGameSimulator`.
-It will accept validated simulation input and a caller-provided `OutputStream`,
-evolve the board synchronously, and encode states from `t=0` through `t=N`.
+The public simulation entry point is `com.civilonia.gameoflife.GameOfLifeSimulator`.
+Create an instance with its static factory, providing the caller-owned output stream;
+it evolves the board synchronously and encodes states from `t=0` through `t=N`.
 
 Illustrative usage after the model and API issues are complete:
 
@@ -106,14 +106,14 @@ Board initialBoard = /* construct an immutable board */;
 SimulationInput input = new SimulationInput(initialBoard, 10);
 
 try (OutputStream output = Files.newOutputStream(Path.of("game-of-life.bin"))) {
-    new LifeGameSimulator().simulate(input, output);
+    GameOfLifeSimulator simulator = GameOfLifeSimulator.create(output);
+    simulator.simulate(input);
 }
 ```
 
-The exact constructors and method names other than `LifeGameSimulator` are not
-implemented yet and will be documented with the released API. The example
+The public API is `GameOfLifeSimulator.create(output).simulate(input)`. The example
 application, rather than the library, owns file creation and closes its file
-stream. The library must not close a caller-provided stream; `IOException`s are
+stream. The library does not close a caller-provided stream; `IOException`s are
 propagated and a failed write may leave partial output in that stream.
 
 ## Binary output
@@ -129,7 +129,7 @@ intentionally out of scope for the initial format.
 
 A small Java `main` application will demonstrate a fixed, reproducible pattern
 without Minecraft or a server. It will construct input through the public API,
-run `LifeGameSimulator`, and write a binary result file. Execution commands,
+run `GameOfLifeSimulator`, and write a binary result file. Execution commands,
 output path, and expected result will be documented here when that example is
 implemented.
 

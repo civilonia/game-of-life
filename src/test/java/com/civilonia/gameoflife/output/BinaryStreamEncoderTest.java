@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.civilonia.gameoflife.core.SimulationConditions;
-import com.civilonia.gameoflife.core.Simulator;
 import com.civilonia.gameoflife.model.Board;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,7 +24,7 @@ class BinaryStreamEncoderTest {
                 .build();
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        Simulator.run(board, 0, new BinaryStreamEncoder(output));
+        writeSimulation(board, 0, output);
 
         assertArrayEquals(bytes(
                 0x47, 0x4F, 0x4C, 0x46, 0x01,
@@ -43,7 +42,7 @@ class BinaryStreamEncoderTest {
                 .build();
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        Simulator.run(board, 1, new BinaryStreamEncoder(output));
+        writeSimulation(board, 1, output);
 
         assertArrayEquals(bytes(
                 0x47, 0x4F, 0x4C, 0x46, 0x01,
@@ -62,8 +61,8 @@ class BinaryStreamEncoderTest {
         ByteArrayOutputStream first = new ByteArrayOutputStream();
         ByteArrayOutputStream second = new ByteArrayOutputStream();
 
-        Simulator.run(board, 3, new BinaryStreamEncoder(first));
-        Simulator.run(board, 3, new BinaryStreamEncoder(second));
+        writeSimulation(board, 3, first);
+        writeSimulation(board, 3, second);
 
         assertArrayEquals(first.toByteArray(), second.toByteArray());
     }
@@ -73,7 +72,7 @@ class BinaryStreamEncoderTest {
         CloseTrackingOutputStream output = new CloseTrackingOutputStream();
 
         Board board = new Board(1, 1);
-        Simulator.run(board, 0, new BinaryStreamEncoder(output));
+        writeSimulation(board, 0, output);
 
         assertDoesNotThrow(() -> output.write(0));
         assertDoesNotThrow(output::close);
@@ -91,7 +90,7 @@ class BinaryStreamEncoderTest {
         assertThrows(IOException.class,
                 () -> {
                     Board board = new Board(1, 1);
-                    Simulator.run(board, 0, new BinaryStreamEncoder(failingOutput));
+                    writeSimulation(board, 0, failingOutput);
                 });
     }
 
@@ -141,6 +140,18 @@ class BinaryStreamEncoderTest {
             result[index] = (byte) values[index];
         }
         return result;
+    }
+
+    private static void writeSimulation(Board board, long transitions, OutputStream output)
+            throws IOException {
+        BinaryStreamEncoder encoder = new BinaryStreamEncoder(output);
+        encoder.writeConditions(new SimulationConditions(board.width(), board.height(), transitions));
+        Board currentBoard = board;
+        encoder.writeBoard(currentBoard);
+        for (long generation = 0; generation < transitions; generation++) {
+            currentBoard = com.civilonia.gameoflife.core.ConwayTransition.nextGeneration(currentBoard);
+            encoder.writeBoard(currentBoard);
+        }
     }
 
     private static final class CloseTrackingOutputStream extends ByteArrayOutputStream {
