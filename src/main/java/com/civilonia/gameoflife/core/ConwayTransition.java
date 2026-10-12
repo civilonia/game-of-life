@@ -4,7 +4,7 @@ import com.civilonia.gameoflife.model.Board;
 import java.util.Objects;
 
 /**
- * Stateless operations for one Conway's Game of Life cell transition.
+ * Stateless operations for Conway's Game of Life transitions.
  *
  * <p>All calculations use the eight-cell Moore neighborhood. {@link Board}
  * treats out-of-bounds coordinates as dead, so no coordinate wrapping occurs.
@@ -52,5 +52,31 @@ public final class ConwayTransition {
             throw new IllegalArgumentException("liveNeighbors must be between 0 and 8");
         }
         return liveNeighbors == 3 || (currentlyAlive && liveNeighbors == 2);
+    }
+
+    /**
+     * Computes the board for the next generation.
+     *
+     * <p>Every cell is evaluated against {@code board}, then the resulting states
+     * are used to construct a separate immutable board. Consequently, cells that
+     * change state during this operation cannot affect other cells in the same
+     * generation.</p>
+     *
+     * @param board board for the current generation
+     * @return a new board with the same dimensions and the next generation's states
+     * @throws NullPointerException if {@code board} is null
+     */
+    public static Board nextGeneration(Board board) {
+        Objects.requireNonNull(board, "board must not be null");
+
+        int width = board.width();
+        int height = board.height();
+        boolean[][] nextCells = new boolean[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                nextCells[y][x] = nextState(board.isAlive(x, y), countLiveNeighbors(board, x, y));
+            }
+        }
+        return new Board(width, height, nextCells);
     }
 }

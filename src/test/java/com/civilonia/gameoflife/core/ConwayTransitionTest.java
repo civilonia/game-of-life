@@ -75,4 +75,109 @@ class ConwayTransitionTest {
         assertThrows(IllegalArgumentException.class, () -> ConwayTransition.nextState(true, -1));
         assertThrows(IllegalArgumentException.class, () -> ConwayTransition.nextState(false, 9));
     }
+
+    @Test
+    void evolvesABlockAsAStillLife() {
+        Board block = board(new boolean[][] {
+                {false, false, false, false},
+                {false, true, true, false},
+                {false, true, true, false},
+                {false, false, false, false}
+        });
+
+        assertBoardEquals(block, ConwayTransition.nextGeneration(block));
+    }
+
+    @Test
+    void evolvesABlinkerThroughItsPeriodTwoOscillation() {
+        Board horizontal = board(new boolean[][] {
+                {false, false, false, false, false},
+                {false, false, false, false, false},
+                {false, true, true, true, false},
+                {false, false, false, false, false},
+                {false, false, false, false, false}
+        });
+        Board vertical = board(new boolean[][] {
+                {false, false, false, false, false},
+                {false, false, true, false, false},
+                {false, false, true, false, false},
+                {false, false, true, false, false},
+                {false, false, false, false, false}
+        });
+
+        Board firstGeneration = ConwayTransition.nextGeneration(horizontal);
+
+        assertBoardEquals(vertical, firstGeneration);
+        assertBoardEquals(horizontal, ConwayTransition.nextGeneration(firstGeneration));
+    }
+
+    @Test
+    void evolvesAGliderDiagonally() {
+        Board glider = board(new boolean[][] {
+                {false, false, false, false, false, false},
+                {false, false, true, false, false, false},
+                {false, false, false, true, false, false},
+                {false, true, true, true, false, false},
+                {false, false, false, false, false, false},
+                {false, false, false, false, false, false}
+        });
+        Board expectedAfterFourGenerations = board(new boolean[][] {
+                {false, false, false, false, false, false},
+                {false, false, false, false, false, false},
+                {false, false, false, true, false, false},
+                {false, false, false, false, true, false},
+                {false, false, true, true, true, false},
+                {false, false, false, false, false, false}
+        });
+
+        Board evolved = glider;
+        for (int generation = 0; generation < 4; generation++) {
+            evolved = ConwayTransition.nextGeneration(evolved);
+        }
+
+        assertBoardEquals(expectedAfterFourGenerations, evolved);
+    }
+
+    @Test
+    void returnsANewBoardWithoutChangingTheInputAndIsDeterministic() {
+        Board original = board(new boolean[][] {
+                {false, true, false},
+                {false, true, false},
+                {false, true, false}
+        });
+        Board expectedInput = board(new boolean[][] {
+                {false, true, false},
+                {false, true, false},
+                {false, true, false}
+        });
+
+        Board firstResult = ConwayTransition.nextGeneration(original);
+        Board secondResult = ConwayTransition.nextGeneration(original);
+
+        assertFalse(firstResult == original);
+        assertEquals(original.width(), firstResult.width());
+        assertEquals(original.height(), firstResult.height());
+        assertBoardEquals(expectedInput, original);
+        assertBoardEquals(firstResult, secondResult);
+    }
+
+    @Test
+    void rejectsANullBoardWhenComputingTheNextGeneration() {
+        assertThrows(NullPointerException.class, () -> ConwayTransition.nextGeneration(null));
+    }
+
+    private static Board board(boolean[][] cells) {
+        return new Board(cells[0].length, cells.length, cells);
+    }
+
+    private static void assertBoardEquals(Board expected, Board actual) {
+        assertEquals(expected.width(), actual.width());
+        assertEquals(expected.height(), actual.height());
+        for (int y = 0; y < expected.height(); y++) {
+            for (int x = 0; x < expected.width(); x++) {
+                assertEquals(expected.isAlive(x, y), actual.isAlive(x, y),
+                        "cell state differs at (" + x + ", " + y + ")");
+            }
+        }
+    }
 }
